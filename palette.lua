@@ -61,15 +61,14 @@ local function make_hues(hue_count)
     end
 end
 
-local min_value_range = {10, 15}
-local max_value_range = {80, 95}
-local temp_adjust = 50
+local min_value = 15
+local max_value = 100
+local hue_top = 80
+local hue_bottom = 225
+local hueshift_amount = 50
 local desaturate_threshold = 0.6
 local desaturate_amount = 60
 local function ramp_from_hue(hue, base_saturation, num_values)
-    local min_value = math.random(min_value_range[1], min_value_range[2])
-    local max_value = math.random(max_value_range[1], max_value_range[2])
-
     if num_values == 1 then
         return {
             {hue, base_saturation, max_value}
@@ -77,6 +76,13 @@ local function ramp_from_hue(hue, base_saturation, num_values)
     end
 
     -- printf("creating ramp for hue %s", hue)
+
+    local hueshift_dir
+    if hue < hue_bottom and hue > hue_top then
+        hueshift_dir = -1
+    else
+        hueshift_dir = 1
+    end
 
     local ramp = {}
     for i = 0, (num_values - 1) do
@@ -91,16 +97,13 @@ local function ramp_from_hue(hue, base_saturation, num_values)
         local value_ratio = math.min(1.0, base_ratio / desaturate_threshold)
         local v = lerp(value_ratio, min_value, max_value)
 
-        local r, g, b = hsv_to_rgb(hue, s, v)
+        local h = (hue + (base_ratio - 0.5) * hueshift_amount * hueshift_dir) % 360
 
-        local this_temp_adjust = math.min(temp_adjust, 1.2 * v)
+        -- printf("adjusting hue %.2f for ratio %.2f", (base_ratio - 0.5) * hueshift_amount * hueshift_dir, base_ratio)
 
-        r2 = clamp(math.floor(r + this_temp_adjust * (base_ratio - 0.5)), 0, 255)
-        b2 = clamp(math.floor(b + this_temp_adjust * (0.5 - base_ratio)), 0, 255)
+        local r, g, b = hsv_to_rgb(h, s, v)
 
-        -- printf("adjusting r %s from %s to %s and b %s from %s to %s (ratio %.1f, g %s)", r2 - r, r, r2, b2 - b, b, b2, base_ratio, g)
-
-        table.insert(ramp, {r2, g, b2})
+        table.insert(ramp, {r, g, b})
     end
 
     return ramp

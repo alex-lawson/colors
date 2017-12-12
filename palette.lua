@@ -63,8 +63,9 @@ end
 
 local min_value_range = {10, 15}
 local max_value_range = {80, 95}
-local temperature_ramp_range = {15, 25}
-local top_desaturate_range = {30, 50}
+local temp_adjust = 50
+local desaturate_threshold = 0.6
+local desaturate_amount = 60
 local function ramp_from_hue(hue, base_saturation, num_values)
     local min_value = math.random(min_value_range[1], min_value_range[2])
     local max_value = math.random(max_value_range[1], max_value_range[2])
@@ -75,28 +76,29 @@ local function ramp_from_hue(hue, base_saturation, num_values)
         }
     end
 
-    local temperature_ramp = math.random(temperature_ramp_range[1], temperature_ramp_range[2])
-
-    local top_desaturate = math.random(top_desaturate_range[1], top_desaturate_range[2])
+    -- printf("creating ramp for hue %s", hue)
 
     local ramp = {}
     for i = 0, (num_values - 1) do
-        local ratio = i / (num_values - 1)
+        local base_ratio = i / (num_values - 1)
 
-        local this_saturation = base_saturation
-        if ratio > 0.5 then
-            this_saturation = math.max(0, this_saturation - (ratio - 0.5) * 2 * top_desaturate)
+        local s = base_saturation
+        if base_ratio > desaturate_threshold then
+            local desaturate = (base_ratio - desaturate_threshold) / (1.0 - desaturate_threshold) * desaturate_amount
+            s = math.max(0, s - desaturate)
         end
 
-        local r, g, b = hsv_to_rgb(
-            hue,
-            this_saturation,
-            lerp(ratio, min_value, max_value))
+        local value_ratio = math.min(1.0, base_ratio / desaturate_threshold)
+        local v = lerp(value_ratio, min_value, max_value)
 
-        r2 = clamp(math.floor(r + temperature_ramp * (ratio - 0.5)), 0, 255)
-        b2 = clamp(math.floor(b + temperature_ramp * (0.5 - ratio)), 0, 255)
+        local r, g, b = hsv_to_rgb(hue, s, v)
 
-        -- printf("adjusting r from %s to %s and b from %s to %s (ratio %.1f)", r, r2, b, b2, ratio)
+        local this_temp_adjust = math.min(temp_adjust, 1.2 * v)
+
+        r2 = clamp(math.floor(r + this_temp_adjust * (base_ratio - 0.5)), 0, 255)
+        b2 = clamp(math.floor(b + this_temp_adjust * (0.5 - base_ratio)), 0, 255)
+
+        -- printf("adjusting r %s from %s to %s and b %s from %s to %s (ratio %.1f, g %s)", r2 - r, r, r2, b2 - b, b, b2, base_ratio, g)
 
         table.insert(ramp, {r2, g, b2})
     end
@@ -104,7 +106,7 @@ local function ramp_from_hue(hue, base_saturation, num_values)
     return ramp
 end
 
-local base_saturation_range = {70, 100}
+local base_saturation_range = {100, 100}
 function make_palette(num_tones, num_values)
     local base_saturation = math.random(base_saturation_range[1], base_saturation_range[2])
 

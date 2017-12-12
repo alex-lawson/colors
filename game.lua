@@ -4,14 +4,21 @@ function Game:init()
     math.randomseed(os.time())
     self.canvas = love.graphics.newCanvas()
     MainCamera.view_center = MainCamera.screen_center
-    self.timer = 0
+
+    self.auto_cycle_time = 2
+    self.auto_cycle_timer = 0
+    self.auto_cycle_enabled = false
+
+    self:generate_new_palette()
 end
 
 function Game:update(dt)
-    self.timer = self.timer - dt
-    if self.timer <= 0 then
-        self:generate_new_palette()
-        self.timer = 2
+    if self.auto_cycle_enabled then
+        self.auto_cycle_timer = self.auto_cycle_timer - dt
+        if self.auto_cycle_timer <= 0 then
+            self:generate_new_palette()
+            self.auto_cycle_timer = self.auto_cycle_time
+        end
     end
 end
 
@@ -43,6 +50,14 @@ end
 function Game:key_pressed(key)
     if key == "space" then
         self:generate_new_palette()
+    elseif key == "return" then
+        self.auto_cycle_enabled = not self.auto_cycle_enabled
+        self.auto_cycle_timer = self.auto_cycle_time
+    elseif key == "f12" then
+        local screenshot = love.graphics.newScreenshot();
+        local ss_name = string.format("%8d.png", math.random(1, 99999999))
+        screenshot:encode('png', ss_name);
+        Log:message("Screenshot saved as %s", love.filesystem.getSaveDirectory() .. '/' .. ss_name)
     end
 end
 
@@ -51,8 +66,8 @@ function Game:key_released(key)
 end
 
 function Game:generate_new_palette()
-    self.palette_tones = math.random(2, 4)
-    self.palette_values = math.random(3, 5)
+    self.palette_tones = math.random(3, 4)
+    self.palette_values = math.random(5, 5)
 
     self.palette = make_palette(self.palette_tones, self.palette_values)
 

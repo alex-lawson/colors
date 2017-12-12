@@ -61,13 +61,33 @@ local function make_hues(hue_count)
     end
 end
 
+local apparent_brightness = {
+    {0, 0.2},
+    {60, 1.0},
+    {120, 0.75},
+    {180, 0.9},
+    {240, 0},
+    {300, 0.5},
+    {360, 0.2}
+}
+
+function hue_apparent_brightness(hue)
+    for i, p in ipairs(apparent_brightness) do
+        if p[1] > hue then
+            local last_p = apparent_brightness[i - 1]
+            local ratio = (hue - last_p[1]) / (p[1] - last_p[1])
+            return lerp(ratio, last_p[2], p[2])
+        end
+    end
+end
+
 local min_value = 15
 local max_value = 100
 local hue_top = 80
 local hue_bottom = 225
 local hueshift_amount = 50
 local desaturate_threshold = 0.6
-local desaturate_amount = 60
+local desaturate_amount = 80
 local function ramp_from_hue(hue, base_saturation, num_values)
     if num_values == 1 then
         return {
@@ -88,11 +108,14 @@ local function ramp_from_hue(hue, base_saturation, num_values)
     for i = 0, (num_values - 1) do
         local base_ratio = i / (num_values - 1)
 
-        local s = base_saturation
-        if base_ratio > desaturate_threshold then
-            local desaturate = (base_ratio - desaturate_threshold) / (1.0 - desaturate_threshold) * desaturate_amount
-            s = math.max(0, s - desaturate)
-        end
+        local h = (hue + (base_ratio - 0.5) * hueshift_amount * hueshift_dir) % 360
+
+        -- local ab = hue_apparent_brightness(h)
+        -- local dab = ab - hue_apparent_brightness(hue)
+
+        local desaturate_ratio = math.max(0, (base_ratio - desaturate_threshold) / (1.0 - desaturate_threshold))
+        local desaturate = desaturate_ratio * desaturate_amount
+        local s = math.max(0, base_saturation - desaturate)
 
         local value_ratio = math.min(1.0, base_ratio / desaturate_threshold)
         local v = lerp(value_ratio, min_value, max_value)

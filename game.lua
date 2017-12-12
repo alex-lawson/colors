@@ -1,7 +1,8 @@
 Game = class()
 
 function Game:init()
-    math.randomseed(os.time())
+    math.randomseed(1)
+    -- math.randomseed(os.time())
     self.canvas = love.graphics.newCanvas()
     MainCamera.view_center = MainCamera.screen_center
 
@@ -55,7 +56,8 @@ function Game:key_pressed(key)
         self.auto_cycle_timer = self.auto_cycle_time
     elseif key == "f12" then
         local screenshot = love.graphics.newScreenshot();
-        local ss_name = string.format("%8d.png", math.random(1, 99999999))
+        math.randomseed(os.time())
+        local ss_name = string.format("%08d.png", math.random(1, 99999999))
         screenshot:encode('png', ss_name);
         Log:message("Screenshot saved as %s", love.filesystem.getSaveDirectory() .. '/' .. ss_name)
     end

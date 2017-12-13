@@ -42,3 +42,13 @@ end
 function winding_direction(p1, p2, p3)
     return (p1[1] - p3[1]) * (p2[2] - p3[2]) - (p2[1] - p3[1]) * (p1[2] - p3[2])
 end
+
+local abs = math.abs
+function minmax(best, ...)
+    for _, v in ipairs({...}) do
+        if abs(v) > abs(best) then
+            best = v
+        end
+    end
+    return best
+end

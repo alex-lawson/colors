@@ -1,8 +1,8 @@
 Game = class()
 
 function Game:init()
-    math.randomseed(1)
-    -- math.randomseed(os.time())
+    -- math.randomseed(1)
+    math.randomseed(os.time())
     self.canvas = love.graphics.newCanvas()
     MainCamera.view_center = MainCamera.screen_center
 
@@ -69,7 +69,7 @@ end
 
 function Game:generate_new_palette()
     self.palette_tones = math.random(3, 4)
-    self.palette_values = math.random(5, 5)
+    self.palette_values = math.random(4, 5)
 
     self.palette = make_palette(self.palette_tones, self.palette_values)
 

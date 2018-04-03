@@ -82,22 +82,22 @@ function hue_apparent_brightness(hue)
     end
 end
 
-local base_min_value = 25
-local min_value_bab_influence = -15
-local base_max_value = 100
-local max_value_bab_influence = -10
+local base_min_value = 0.25
+local min_value_bab_influence = -0.15
+local base_max_value = 1.0
+local max_value_bab_influence = -0.10
 local hue_top = 80
 local hue_bottom = 225
 local hueshift_amount = 45
 local base_desaturate_threshold = 0.55
 local desaturate_threshold_ab_influence = 0.15
-local desaturate_amount = 65
-local desaturate_ab_bonus = 10
-local min_saturation = 20
+local desaturate_amount = 0.65
+local desaturate_ab_bonus = 0.10
+local min_saturation = 0.20
 local function ramp_from_hue(base_hue, base_saturation, num_values)
     if num_values == 1 then
         return {
-            {base_hue, 100 * base_saturation, max_value}
+            {base_hue, base_saturation, max_value}
         }
     end
 
@@ -124,8 +124,8 @@ local function ramp_from_hue(base_hue, base_saturation, num_values)
 
         local desaturate_ratio = math.max(0, (base_ratio - desaturate_threshold) / (1.0 - desaturate_threshold))
         local desaturate = desaturate_ratio * (desaturate_amount + ab * desaturate_ab_bonus)
-        local s = math.max(min_saturation, base_saturation * (100 - desaturate))
-        
+        local s = math.max(min_saturation, base_saturation * (1.0 - desaturate))
+
         local value_ratio = clamp(base_ratio / desaturate_threshold, 0, 1)
         local v = lerp(value_ratio, min_value, max_value)
 
@@ -134,6 +134,8 @@ local function ramp_from_hue(base_hue, base_saturation, num_values)
         -- printf("adjusting hue %.2f for ratio %.2f", (base_ratio - 0.5) * hueshift_amount * hueshift_dir, base_ratio)
 
         local r, g, b = hsv_to_rgb(h, s, v)
+
+        -- printf("rgb %d, %d, %d, hex %s, reverse hex %d, %d, %d", r, g, b, hex, r2, g2, b2)
 
         table.insert(ramp, {r, g, b})
     end
@@ -154,10 +156,10 @@ function make_palette(num_tones, num_values)
     return ramps
 end
 
--- converts RGB values in the range of 0-255
--- to HSV values in the range of 0-360, 0-100, and 0-100 respectively
+-- converts RGB values in the range of 0-1
+-- to HSV values in the range of 0-360, 0-1, and 0-1 respectively
 function rgb_to_hsv(r, g, b)
-    r, g, b = r / 255, g / 255, b / 255
+    r, g, b = r, g, b
 
     local min = math.min(r, g, b)
     local max = math.max(r, g, b)
@@ -179,16 +181,16 @@ function rgb_to_hsv(r, g, b)
 
     h = (h * 60) % 360
 
-    local s = (d / max) * 100
-    local v = max * 100
+    local s = (d / max)
+    local v = max
 
     return h, s, v
 end
 
--- converts HSV values in the range of 0-360, 0-100, and 0-100 respectively
--- to RGB values in the range of 0-255
+-- converts HSV values in the range of 0-360, 0-1, and 0-1 respectively
+-- to RGB values in the range of 0-1
 function hsv_to_rgb(h, s, v)
-    h, s, v = h / 360, s / 100, v / 100
+    h, s, v = h / 360, s, v
 
     local i = math.floor(h * 6) % 6
     local f = (h * 6) - i
@@ -211,5 +213,23 @@ function hsv_to_rgb(h, s, v)
         r, g, b = v, p, q
     end
 
-    return math.floor(r * 255 + 0.5), math.floor(g * 255 + 0.5), math.floor(b * 255 + 0.5)
+    return r, g, b
+end
+
+function rgb_to_hex(r, g, b)
+    r = math.floor(r * 255 + 0.5)
+    g = math.floor(g * 255 + 0.5)
+    b = math.floor(b * 255 + 0.5)
+
+    local hex_string = string.format("%02x%02x%02x", r, g, b)
+
+    return hex_string
+end
+
+function hex_to_rgb(hex_string)
+    local r = tonumber(hex_string:sub(1, 2), 16) / 255
+    local g = tonumber(hex_string:sub(3, 4), 16) / 255
+    local b = tonumber(hex_string:sub(5, 6), 16) / 255
+
+    return r, g, b
 end

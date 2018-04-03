@@ -1,8 +1,8 @@
 Game = class()
 
 function Game:init()
-    -- math.randomseed(1)
-    math.randomseed(os.time())
+    math.randomseed(1)
+    -- math.randomseed(os.time())
     self.canvas = love.graphics.newCanvas()
     MainCamera.view_center = MainCamera.screen_center
 

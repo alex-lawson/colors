@@ -1,4 +1,3 @@
-
 -- converts RGB values in the range of 0-1
 -- to HSV values in the range of 0-360, 0-1, and 0-1 respectively
 function rgb_to_hsv(r, g, b)
@@ -70,11 +69,33 @@ function rgb_to_hex(r, g, b)
     return hex_string
 end
 
--- converts a hex string e.g. "AC2DF3" to R, G, B values in the range of 0-1
+-- converts a 6-digit hex string e.g. "AC2DF3" to R, G, B values in the range of 0-1
 function hex_to_rgb(hex_string)
     local r = tonumber(hex_string:sub(1, 2), 16) / 255
     local g = tonumber(hex_string:sub(3, 4), 16) / 255
     local b = tonumber(hex_string:sub(5, 6), 16) / 255
 
     return r, g, b
+end
+
+-- converts R, G, B, A values in the range of 0-1 to an *integer* hex representation (rounding may occur)
+function rgba_to_hex(r, g, b, a)
+    r = math.floor(r * 255 + 0.5)
+    g = math.floor(g * 255 + 0.5)
+    b = math.floor(b * 255 + 0.5)
+    a = math.floor(a * 255 + 0.5)
+
+    local hex_string = string.format("%02x%02x%02x%02x", r, g, b, a)
+
+    return hex_string
+end
+
+-- converts an 8-digit hex string e.g. "AC2DF3FF" to R, G, B, A values in the range of 0-1
+function hex_to_rgba(hex_string)
+    local r = tonumber(hex_string:sub(1, 2), 16) / 255
+    local g = tonumber(hex_string:sub(3, 4), 16) / 255
+    local b = tonumber(hex_string:sub(5, 6), 16) / 255
+    local a = tonumber(hex_string:sub(7, 8), 16) / 255
+
+    return r, g, b, a
 end
